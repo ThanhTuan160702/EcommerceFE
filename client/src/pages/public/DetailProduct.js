@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import {createSearchParams, useLocation, useNavigate, useParams} from 'react-router-dom'
-import { apiGetProduct, apiGetProducts, apiUpdateCart } from '../../apis'
-import { BreadCrumbs, SelectQuantity, MoreInformation, ProductInformation, CustomSlider } from '../../components'
+import React, { useState, useEffect, useCallback } from 'react';
+import { createSearchParams, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { apiGetProduct, apiGetProducts, apiUpdateCart } from '../../apis';
+import { BreadCrumbs, SelectQuantity, MoreInformation, ProductInformation, CustomSlider } from '../../components';
 import Slider from 'react-slick';
-import { formatPrice, renderStar} from '../../utils/helper';
+import { formatPrice, renderStar } from '../../utils/helper';
 import DOMPurify from 'dompurify';
 import { useDispatch, useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { getUser } from '../../store/user/asyncAction';
 import path from '../../utils/path';
+import { debounce } from 'lodash';
 
 const settings = {
   dots: false,
@@ -19,26 +20,25 @@ const settings = {
   slidesToScroll: 1
 };
 
-
 const DetailProduct = () => {
-  const location = useLocation()
-  const {pid , title, category} = useParams()
-  const [titleProduct, setTitleProduct] = useState(null)
-  const [gbProduct, setGbProduct] = useState('')
-  const [colorProduct, setColorProduct] = useState('')
-  const [color, setColor] = useState([])
-  const [gb, setGb] = useState([])
-  const [product, setProduct] = useState(null)
-  const [productSlider, setProductSlider] = useState(null)
-  const [currentImg, setCurrentImg] = useState(null)
-  const [quantity, setQuantity] = useState(1)
-  const { current } = useSelector(state => state.user)
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const location = useLocation();
+  const { pid, title, category } = useParams();
+  const [titleProduct, setTitleProduct] = useState(null);
+  const [gbProduct, setGbProduct] = useState('');
+  const [colorProduct, setColorProduct] = useState('');
+  const [color, setColor] = useState([]);
+  const [gb, setGb] = useState([]);
+  const [product, setProduct] = useState(null);
+  const [productSlider, setProductSlider] = useState(null);
+  const [currentImg, setCurrentImg] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const { current } = useSelector(state => state.user);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const onClick = async() => {
-    if(product){
-      if(!current) {
+  const onClick = async () => {
+    if (product) {
+      if (!current) {
         return Swal.fire({
           title: 'Login',
           text: 'Please login to add product !',
@@ -46,99 +46,90 @@ const DetailProduct = () => {
           cancelButtonText: 'Cancel',
           showCancelButton: true,
           confirmButtonText: 'Login'
-        }).then((e)=>{
-          if(e.isConfirmed){
+        }).then((e) => {
+          if (e.isConfirmed) {
             navigate({
               pathname: `/${path.LOGIN}`,
-              search: createSearchParams({redirect: location.pathname}).toString()
-            })
+              search: createSearchParams({ redirect: location.pathname }).toString()
+            });
           }
-        })
+        });
       }
-      const response = await apiUpdateCart({pid: product._id, color: product.color, quantity: quantity})
-      if(response.success){
-        toast.success('Add product is successfully')
+      const response = await apiUpdateCart({ pid: product._id, color: product.color, quantity: quantity });
+      if (response.success) {
+        toast.success('Add product is successfully');
       }
-      dispatch(getUser())
+      dispatch(getUser());
     }
-  }
+  };
 
-  const fetchData = async() => {
-    const response = await apiGetProduct(pid)
-    if(response?.success){
-      setProduct(response?.mes)
-      setGbProduct(response?.mes.Gb)
-      setColorProduct(response?.mes.color)
-      setCurrentImg(response?.mes.images[0])
+  const fetchData = useCallback(async () => {
+    const response = await apiGetProduct(pid);
+    if (response?.success) {
+      setProduct(response?.mes);
+      setGbProduct(response?.mes.Gb);
+      setColorProduct(response?.mes.color);
+      setCurrentImg(response?.mes.images[0]);
     }
-  }
+  }, [pid]);
 
-  const fetchCustom = async() => {
-    const response = await apiGetProducts({category})
-    setProductSlider(response?.mes)
-  }
-  
-  const fetchTitle = async() => {
-    const response = await apiGetProducts({title: product?.title?.slice(0, 20)})
-    setTitleProduct(response?.mes)
-  }
+  const fetchCustom = useCallback(async () => {
+    const response = await apiGetProducts({ category });
+    setProductSlider(response?.mes);
+  }, [category]);
 
-  const fetDataAndTitle = async() => {
-    await fetchData();
-    await fetchCustom();
-    if(product?.title) {
-      await fetchTitle();
-    }
-  }
+  const fetchTitle = useCallback(async () => {
+    const response = await apiGetProducts({ title: product?.title?.slice(0, 20) });
+    setTitleProduct(response?.mes);
+  }, [product?.title]);
 
-  const fetchVarriant = async() => {
-    if(product?.title){
-      const response = await apiGetProducts({title: product.title.slice(0, 20), Gb: gbProduct, color: colorProduct})
-      if(response?.success){
-        navigate(`/${category}/${response?.mes[0]._id}/${response?.mes[0]?.title}`)
+  const fetchVarriantDebounced = useCallback(
+    debounce(async () => {
+      if (product?.title) {
+        const response = await apiGetProducts({ title: product.title.slice(0, 20), Gb: gbProduct, color: colorProduct });
+        if (response?.success) {
+          navigate(`/${category}/${response?.mes[0]._id}/${response?.mes[0]?.title}`);
+        }
       }
-    }
-  }
-
-  useEffect(()=>{
-    fetchVarriant()
-  },[gbProduct, colorProduct])
-  
-  
-  useEffect(()=>{
-    if(pid){
-      fetDataAndTitle()
-    }
-  },[pid, product?.title])
+    }, 500), // Adjust the debounce time as needed
+    [product, category, gbProduct, colorProduct, navigate]
+  );
 
   useEffect(() => {
-    if (titleProduct) {
-      Array();
+    fetchData();
+    fetchCustom();
+    if (product?.title) {
+      fetchTitle();
     }
-  }, [titleProduct]);
-  
+  }, [fetchData, fetchCustom, fetchTitle, product?.title]);
+
+  useEffect(() => {
+    fetchVarriantDebounced();
+    return () => fetchVarriantDebounced.cancel(); // Cancel the debounced function on component unmount
+  }, [gbProduct, colorProduct, fetchVarriantDebounced]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleQuantity = useCallback((number)=>{
-    if(!Number(number) || Number(number) < 0 || Number(number) > product?.quantity){ 
-      return
-    }else{
-      setQuantity(number)
+  const handleQuantity = useCallback((number) => {
+    if (!Number(number) || Number(number) < 0 || Number(number) > product?.quantity) {
+      return;
+    } else {
+      setQuantity(number);
     }
-  },[quantity])
+  }, [quantity, product?.quantity]);
 
-  const handleChangeQuantity = useCallback((text)=>{
-    if(text==='-' && +quantity > 1){
-      setQuantity(+quantity-1)
+  const handleChangeQuantity = useCallback((text) => {
+    if (text === '-' && +quantity > 1) {
+      setQuantity(+quantity - 1);
     }
-    if(text==='+'){
-      setQuantity(+quantity+1)
+    if (text === '+') {
+      setQuantity(+quantity + 1);
     }
-  },[quantity])
+  }, [quantity]);
 
-  const Array = () => {
+  useEffect(() => {
     const uniqueColors = new Set();
     const uniqueGbs = new Set();
     titleProduct?.forEach(el => {
@@ -149,7 +140,7 @@ const DetailProduct = () => {
     });
     setGb([...uniqueGbs]);
     setColor([...uniqueColors]);
-  }
+  }, [titleProduct]);
   
   return (
     <div className='w-full'>
