@@ -6,6 +6,8 @@ import { toast } from 'react-toastify'
 
 const ProductQuantity = ({quantityProduct, countProduct , pid, color, setIsLoading}) => {
 
+    console.log(quantityProduct)
+
     const [quantity, setQuantity] = useState(quantityProduct)
     const [isUpdating, setIsUpdating] = useState(false)
     const dispatch = useDispatch()

@@ -20,6 +20,7 @@ const DetailCart = () => {
     const [mobileShip, setMobileShip] = useState(current.mobile)
     const [isChecked, setIsChecked] = useState(false)
     const { newProducts } = useSelector(state => state.products)
+    console.log(newProducts)
     const navigate = useNavigate()
     const dispatch = useDispatch()
 
