@@ -9,10 +9,9 @@ const Public = () => {
 
   return (
     <div className='relative'>
-      {isLoading && <div className='absolute flex items-center justify-center w-full h-screen bg-opacity z-50'>
+      {isLoading && <div className='absolute flex items-center justify-center w-full h-screen bg-opacity z-50 overflow-hidden'>
         <Loading/>
-      </div>
-      }
+      </div>}
       <div className='w-full flex flex-col items-center'>
           <TopHeader/>
           <Header/>

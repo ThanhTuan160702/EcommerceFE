@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createSearchParams, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { apiGetProduct, apiGetProducts, apiUpdateCart } from '../../apis';
-import { BreadCrumbs, SelectQuantity, MoreInformation, ProductInformation, CustomSlider } from '../../components';
+import { BreadCrumbs, SelectQuantity, MoreInformation, ProductInformation, CustomSlider, Loading } from '../../components';
 import Slider from 'react-slick';
 import { formatPrice, renderStar } from '../../utils/helper';
 import DOMPurify from 'dompurify';
@@ -33,6 +33,7 @@ const DetailProduct = () => {
   const [currentImg, setCurrentImg] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const { current } = useSelector(state => state.user);
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -64,6 +65,7 @@ const DetailProduct = () => {
   };
 
   const fetchData = useCallback(async () => {
+    setLoading(true)
     const response = await apiGetProduct(pid);
     if (response?.success) {
       setProduct(response?.mes);
@@ -71,25 +73,32 @@ const DetailProduct = () => {
       setColorProduct(response?.mes.color);
       setCurrentImg(response?.mes.images[0]);
     }
+    setLoading(false)
   }, [pid]);
 
   const fetchCustom = useCallback(async () => {
+    setLoading(true)
     const response = await apiGetProducts({ category });
     setProductSlider(response?.mes);
+    setLoading(false)
   }, [category]);
 
   const fetchTitle = useCallback(async () => {
+    setLoading(true)
     const response = await apiGetProducts({ title: product?.title?.slice(0, 20) });
     setTitleProduct(response?.mes);
+    setLoading(false)
   }, [product?.title]);
 
   const fetchVarriantDebounced = useCallback(
     debounce(async () => {
       if (product?.title) {
+        setLoading(true)
         const response = await apiGetProducts({ title: product.title.slice(0, 20), Gb: gbProduct, color: colorProduct });
         if (response?.success) {
           navigate(`/${category}/${response?.mes[0]._id}/${response?.mes[0]?.title}`);
         }
+        setLoading(false)
       }
     }, 500), // Adjust the debounce time as needed
     [product, category, gbProduct, colorProduct, navigate]
@@ -144,13 +153,16 @@ const DetailProduct = () => {
   
   return (
     <div className='w-full'>
-      <div className='h-[81px] flex items-center justify-center bg-gray-100'>
+      <div className='flex items-center justify-center bg-gray-100'>
         <div className='w-main'>
           <h3 className='font-semibold'>{title}</h3>
           <BreadCrumbs title={title} category={category}/>
         </div>
       </div>
-      <div className='bg-white w-main m-auto mt-4 flex'>
+      <div className='bg-white w-main m-auto mt-4 flex relative'>
+        {loading && <div className='absolute flex items-center justify-center w-full h-full bg-opacity z-50'>
+          <Loading/>
+        </div>}
         <div className='w-[40%] gap-4 flex flex-col'>
           <img src={currentImg} alt='' className='w-[458px] h-[458px] border border-black object-contain' />
           <div className='w-[458px] h-[143px]'>
@@ -206,9 +218,6 @@ const DetailProduct = () => {
       <div className='w-main m-auto mt-4'>
           <h3 className='text-[20px] font-semibold py-[15px] border-b-2 border-main mb-2'>OTHER CUSTOMERS ALSO BUY:</h3>
           <CustomSlider products={productSlider}/>
-      </div>
-      <div className='h-[500px] w-main m-auto mt-8 border'>
-            <h1>{}</h1>
       </div>
     </div>
   )
