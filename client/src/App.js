@@ -18,8 +18,9 @@ function App() {
     dispatch(getCategories())
     dispatch(getNewProducts())
   },[])
+  const { isLoading } = useSelector(state => state.products)
   return (
-    <div className="h-screen font-main relative">
+    <div className={`h-screen font-main relative ${isLoading ? 'overflow-hidden' : ''}`}>
       <Routes>
         <Route path={path.PUBLIC} element={<Public/>}>
           <Route path={path.HOME} element={<Home/>}/>
