@@ -32,7 +32,6 @@ const BestSeller = () => {
         setBestSellers(response.mes) 
         setProducts(response.mes)
       }
-
     }
   
     useEffect(()=>{

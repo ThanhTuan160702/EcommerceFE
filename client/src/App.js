@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes } from 'react-router-dom'
 import { Login, Home, Public,FAQ,DetailProduct,Blogs,Service,Products,FinalRegister,ResetPassword} from './pages/public/index'
@@ -9,11 +9,11 @@ import { getCategories } from './store/app/asyncAction'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getNewProducts } from './store/products/asyncAction';
+import { Loading } from './components';
 
 
 function App() {
   const dispatch = useDispatch()
-  const { isLoggedIn } = useSelector(state => state.user)
   useEffect(()=>{
     dispatch(getCategories())
     dispatch(getNewProducts())
@@ -22,7 +22,7 @@ function App() {
     <div className="h-screen font-main relative">
       <Routes>
         <Route path={path.PUBLIC} element={<Public/>}>
-          <Route path={path.HOME} element={<Home />}/>
+          <Route path={path.HOME} element={<Home/>}/>
           <Route path={path.BLOGS} element={<Blogs />}/>
           <Route path={path.DETAIL_PRODUCT_CATEGORY_PID_TITLE} element={<DetailProduct />}/>
           <Route path={path.FQA} element={<FAQ />}/>

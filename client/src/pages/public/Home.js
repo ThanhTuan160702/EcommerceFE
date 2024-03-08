@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Banner, Sidebar, BestSeller, DealDaily, FeartureProducts, CustomSlider} from '../../components/index'
 import { useSelector } from 'react-redux'
 import { IoIosArrowForward } from "react-icons/io";
@@ -9,6 +9,7 @@ const Home = () => {
 
 
   const navigate = useNavigate()
+
 
   const handleBrand = (category, brand) => {
     navigate({
@@ -29,7 +30,7 @@ const Home = () => {
         </div>
         <div className='flex flex-col gap-5 pl-5 w-[75%] flex-auto '>
           <Banner />
-          <BestSeller />
+          <BestSeller/>
         </div>
       </div>
       <div className='w-main my-8'>
